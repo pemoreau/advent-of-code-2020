@@ -3,8 +3,8 @@
 #[derive(Debug)]
 
 pub struct Policy {
-    min: u32,
-    max: u32,
+    min: usize,
+    max: usize,
     letter: char,
 }
 
@@ -26,7 +26,7 @@ fn parse_line1(s: &str) -> (Policy, &str) {
 fn parse_line2(s: &str) -> (Policy, &str) {
     peg::parser! {
       grammar parser() for str {
-        rule number() -> u32
+        rule number() -> usize
           = n:$(['0'..='9']+) { n.parse().unwrap() }
 
         rule byte() -> char
@@ -46,15 +46,35 @@ fn parse_line2(s: &str) -> (Policy, &str) {
 }
 
 fn check(policy: &Policy, password: &str) -> bool {
-    let c = password.chars().filter(|c| *c == policy.letter).count() as u32;
+    let c = password.chars().filter(|c| *c == policy.letter).count();
     c >= policy.min && c <= policy.max
 }
 
-pub fn part1(input: String) {
-    let values: Vec<_> = input.lines().map(|line| parse_line1(line)).collect();
+fn valid(policy: &Policy, password: &str) -> bool {
+    if policy.min == 0 || policy.max > password.len() {
+        return false;
+    }
+
+    let c1 = password.chars().nth(policy.min - 1).unwrap();
+    let c2 = password.chars().nth(policy.max - 1).unwrap();
+    (policy.letter == c1) ^ (policy.letter == c2)
+}
+
+type FilterFn = fn(&Policy, &str) -> bool;
+
+pub fn generic_part(input: String, filter_function: FilterFn) {
+    let values: Vec<_> = input.lines().map(|line| parse_line2(line)).collect();
     let number = values
         .iter()
-        .filter(|(policy, password)| check(policy, password))
+        .filter(|(policy, password)| filter_function(policy, password))
         .count();
     println!("{}", number)
+}
+
+pub fn part1(input: String) {
+    generic_part(input, check)
+}
+
+pub fn part2(input: String) {
+    generic_part(input, valid)
 }
