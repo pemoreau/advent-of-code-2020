@@ -1,5 +1,3 @@
-// use std::env::var;
-
 pub fn part1(input: String) {
     let values = input.lines().map(|line| line.chars().cycle());
     let cpt = values.enumerate().fold(0, |acc, (i, line)| {

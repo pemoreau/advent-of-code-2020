@@ -1,5 +1,3 @@
-// use std::env::var;
-
 #[derive(Debug)]
 
 pub struct Policy {
@@ -8,7 +6,7 @@ pub struct Policy {
     letter: char,
 }
 
-fn parse_line1(s: &str) -> (Policy, &str) {
+fn _parse_line1(s: &str) -> (Policy, &str) {
     let re = regex::Regex::new(r"^(\d{1,2})-(\d{1,2}) ([a-z]{1}): ([a-z]+)$").unwrap();
     let cap = re.captures(s).unwrap();
     let password: &str = cap.get(4).unwrap().as_str(); // instead of &cap[4]
