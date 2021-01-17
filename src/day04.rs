@@ -30,12 +30,12 @@ fn parse_entry(input: &str) -> IResult<&str, Entry> {
 fn parse_entries(input: &str) -> IResult<&str, Passport> {
     map(
         many1(terminated(parse_entry, alt((tag(" "), line_ending)))),
-        |vec| vec.into_iter().collect(),
+        |vec| vec.into_iter().collect(), // transforms list of tuples into hashmap
     )(input)
 }
 
 fn parse_passports(input: &str) -> IResult<&str, Vec<Passport>> {
-    map(many1(terminated(parse_entries, line_ending)), |vec| vec)(input)
+    many1(terminated(parse_entries, line_ending))(input)
 }
 
 fn valid_passport(p: &Passport) -> bool {
