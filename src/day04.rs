@@ -13,13 +13,13 @@ use nom::{
 };
 
 #[derive(Debug, PartialEq)]
-pub struct Entry {
-    key: String,
-    value: String,
+pub struct Entry<'a> {
+    key: &'a str,
+    value: &'a str,
 }
 #[derive(Debug, PartialEq)]
-pub struct Passport {
-    passport: HashMap<String, String>,
+pub struct Passport<'a> {
+    passport: HashMap<&'a str, &'a str>,
 }
 
 fn parse_key(input: &str) -> IResult<&str, &str> {
@@ -32,8 +32,8 @@ fn parse_value(input: &str) -> IResult<&str, &str> {
 
 fn parse_entry(input: &str) -> IResult<&str, Entry> {
     map(pair(parse_key, parse_value), |(key, value)| Entry {
-        key: key.to_string(),
-        value: value.to_string(),
+        key,
+        value,
     })(input)
 }
 
@@ -58,7 +58,7 @@ fn valid_passport(p: &Passport) -> bool {
         .iter()
         .cloned()
         .collect();
-    let keys: HashSet<_> = p.passport.keys().map(|s| s.as_ref()).collect();
+    let keys: HashSet<_> = p.passport.keys().cloned().collect();
     mandatory_keys.is_subset(&keys)
 }
 
@@ -71,13 +71,13 @@ pub fn part1(input: String) {
         Ok((
             "",
             Entry {
-                key: "abc".to_string(),
-                value: "#cfa07d".to_string()
+                key: "abc",
+                value: "#cfa07d",
             }
         ))
     );
 
-    let (_, passports) = parse_passports(&input[..]).unwrap();
+    let (_, passports) = parse_passports(&input).unwrap();
     println!(
         "result = {}",
         passports.iter().filter(|p| valid_passport(&p)).count()
