@@ -12,15 +12,8 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, PartialEq)]
-pub struct Entry<'a> {
-    key: &'a str,
-    value: &'a str,
-}
-#[derive(Debug, PartialEq)]
-pub struct Passport<'a> {
-    passport: HashMap<&'a str, &'a str>,
-}
+type Entry<'a> = (&'a str, &'a str);
+type Passport<'a> = HashMap<&'a str, &'a str>;
 
 fn parse_key(input: &str) -> IResult<&str, &str> {
     terminated(alpha1, tag(":"))(input)
@@ -31,21 +24,13 @@ fn parse_value(input: &str) -> IResult<&str, &str> {
 }
 
 fn parse_entry(input: &str) -> IResult<&str, Entry> {
-    map(pair(parse_key, parse_value), |(key, value)| Entry {
-        key,
-        value,
-    })(input)
+    pair(parse_key, parse_value)(input)
 }
 
 fn parse_entries(input: &str) -> IResult<&str, Passport> {
     map(
         many1(terminated(parse_entry, alt((tag(" "), line_ending)))),
-        |vec| Passport {
-            passport: vec
-                .into_iter()
-                .map(|Entry { key, value }| (key, value))
-                .collect(),
-        },
+        |vec| vec.into_iter().collect(),
     )(input)
 }
 
@@ -58,7 +43,7 @@ fn valid_passport(p: &Passport) -> bool {
         .iter()
         .cloned()
         .collect();
-    let keys: HashSet<_> = p.passport.keys().cloned().collect();
+    let keys: HashSet<_> = p.keys().cloned().collect();
     mandatory_keys.is_subset(&keys)
 }
 
@@ -66,16 +51,7 @@ pub fn part1(input: String) {
     assert_eq!(parse_key("abc:"), Ok(("", "abc")));
     assert_eq!(parse_value("cfa07d"), Ok(("", "cfa07d")));
     assert_eq!(parse_value("#cfa07d"), Ok(("", "#cfa07d")));
-    assert_eq!(
-        parse_entry("abc:#cfa07d"),
-        Ok((
-            "",
-            Entry {
-                key: "abc",
-                value: "#cfa07d",
-            }
-        ))
-    );
+    assert_eq!(parse_entry("abc:#cfa07d"), Ok(("", ("abc", "#cfa07d"))));
 
     let (_, passports) = parse_passports(&input).unwrap();
     println!(
@@ -127,13 +103,13 @@ fn check_ecl(input: &str) -> bool {
 }
 
 fn checked_passport(p: &Passport) -> bool {
-    let byr = p.passport.get("byr").unwrap();
-    let iyr = p.passport.get("iyr").unwrap();
-    let eyr = p.passport.get("eyr").unwrap();
-    let hgt = p.passport.get("hgt").unwrap();
-    let hcl = p.passport.get("hcl").unwrap();
-    let ecl = p.passport.get("ecl").unwrap();
-    let pid = p.passport.get("pid").unwrap();
+    let byr = p.get("byr").unwrap();
+    let iyr = p.get("iyr").unwrap();
+    let eyr = p.get("eyr").unwrap();
+    let hgt = p.get("hgt").unwrap();
+    let hcl = p.get("hcl").unwrap();
+    let ecl = p.get("ecl").unwrap();
+    let pid = p.get("pid").unwrap();
 
     check_byr(byr)
         && check_iyr(iyr)
