@@ -1,13 +1,13 @@
 extern crate nom;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric1, line_ending},
+    character::complete::{alpha1, alphanumeric1, digit1, line_ending, one_of},
     combinator::{map, opt, recognize},
-    multi::many1,
+    multi::{count, many1},
     sequence::{pair, terminated},
     IResult,
 };
@@ -19,7 +19,7 @@ pub struct Entry {
 }
 #[derive(Debug, PartialEq)]
 pub struct Passport {
-    passport: Vec<Entry>,
+    passport: HashMap<String, String>,
 }
 
 fn parse_key(input: &str) -> IResult<&str, &str> {
@@ -40,7 +40,12 @@ fn parse_entry(input: &str) -> IResult<&str, Entry> {
 fn parse_entries(input: &str) -> IResult<&str, Passport> {
     map(
         many1(terminated(parse_entry, alt((tag(" "), line_ending)))),
-        |vec| Passport { passport: vec },
+        |vec| Passport {
+            passport: vec
+                .into_iter()
+                .map(|Entry { key, value }| (key, value))
+                .collect(),
+        },
     )(input)
 }
 
@@ -53,11 +58,7 @@ fn valid_passport(p: &Passport) -> bool {
         .iter()
         .cloned()
         .collect();
-    let keys: HashSet<_> = p
-        .passport
-        .iter()
-        .map(|Entry { key, value: _ }| &key[..])
-        .collect();
+    let keys: HashSet<_> = p.passport.keys().map(|s| s.as_ref()).collect();
     mandatory_keys.is_subset(&keys)
 }
 
@@ -78,9 +79,75 @@ pub fn part1(input: String) {
 
     let (_, passports) = parse_passports(&input[..]).unwrap();
     println!(
-        "{}",
+        "result = {}",
         passports.iter().filter(|p| valid_passport(&p)).count()
     );
 }
 
-pub fn part2(_input: String) {}
+fn check_byr(input: &str) -> bool {
+    input.len() == 4 && (1920..=2002).contains(&input.parse::<u32>().unwrap())
+}
+
+fn check_iyr(input: &str) -> bool {
+    input.len() == 4 && (2010..=2020).contains(&input.parse::<u32>().unwrap())
+}
+
+fn check_eyr(input: &str) -> bool {
+    input.len() == 4 && (2020..=2030).contains(&input.parse::<u32>().unwrap())
+}
+
+fn check_hgt(input: &str) -> bool {
+    let res: IResult<&str, (&str, &str)> = pair(digit1, alt((tag("cm"), tag("in"))))(input);
+    if let Ok((_, (digits, unit))) = res {
+        let size: u32 = digits.parse().unwrap_or_default();
+        (unit == "cm" && (150..=193).contains(&size)) || (unit == "in" && (59..=76).contains(&size))
+    } else {
+        false
+    }
+}
+
+fn check_hcl(input: &str) -> bool {
+    let res: IResult<&str, &str> = recognize(pair(
+        tag("#"),
+        count(
+            alt((one_of("0123456789"), one_of("abcdefghijklmnopqrstuvwxyz"))),
+            6,
+        ),
+    ))(input);
+    input.len() == 7 && res.is_ok()
+}
+
+fn check_pid(input: &str) -> bool {
+    let res: IResult<&str, &str> = recognize(count(one_of("0123456789"), 9))(input);
+    input.len() == 9 && res.is_ok()
+}
+
+fn check_ecl(input: &str) -> bool {
+    ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&input)
+}
+
+fn checked_passport(p: &Passport) -> bool {
+    let byr = p.passport.get("byr").unwrap();
+    let iyr = p.passport.get("iyr").unwrap();
+    let eyr = p.passport.get("eyr").unwrap();
+    let hgt = p.passport.get("hgt").unwrap();
+    let hcl = p.passport.get("hcl").unwrap();
+    let ecl = p.passport.get("ecl").unwrap();
+    let pid = p.passport.get("pid").unwrap();
+
+    check_byr(byr)
+        && check_iyr(iyr)
+        && check_eyr(eyr)
+        && check_hgt(hgt)
+        && check_hcl(hcl)
+        && check_ecl(ecl)
+        && check_pid(pid)
+}
+
+pub fn part2(input: String) {
+    let (_, passports) = parse_passports(&input[..]).unwrap();
+    let passports = passports
+        .iter()
+        .filter(|p| valid_passport(&p) && checked_passport(&p));
+    println!("result = {}", passports.count());
+}
