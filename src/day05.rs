@@ -1,5 +1,3 @@
-extern crate nom;
-
 fn to_bin(input: &str, lower: char) -> usize {
     input.chars().enumerate().fold(0, |acc, (index, c)| {
         if c == lower {
