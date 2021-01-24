@@ -1,11 +1,7 @@
 fn to_bin(input: &str, lower: char) -> usize {
-    input.chars().enumerate().fold(0, |acc, (index, c)| {
-        if c == lower {
-            acc
-        } else {
-            acc + 1usize.wrapping_shl((input.len() - 1 - index) as u32)
-        }
-    })
+    input
+        .chars()
+        .fold(0, |acc, c| if c == lower { 2 * acc } else { 2 * acc + 1 })
 }
 
 pub fn part1(input: String) {
