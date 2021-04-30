@@ -15,12 +15,10 @@ type Instr struct {
 }
 
 func parseLine(line string) Instr {
-
 	parts := strings.Split(line, " ")
-	inst := new(Instr)
-	inst.op = strings.TrimSpace(parts[0])
-	inst.arg, _ = strconv.Atoi(parts[1])
-	return *inst
+	op := strings.TrimSpace(parts[0])
+	arg, _ := strconv.Atoi(parts[1])
+	return Instr{op, arg}
 }
 
 func readFile() []Instr {
@@ -68,36 +66,31 @@ func (s IntSet) includes(v int) bool {
 	return ok
 }
 
-func terminates(env *Env) bool {
-	env.pc = 0
-	env.acc = 0
+func terminates(env Env) (bool, int) {
 	visited := make(IntSet)
 	for !visited.includes(env.pc) {
 		if env.pc >= len(env.prg) {
-			return true
+			return true, env.acc
 		}
 		visited.add(env.pc)
-		step(env)
+		step(&env)
 	}
-	return false
+	return false, env.acc
 }
 
 func part1(prg []Instr) int {
-	env := new(Env)
-	env.prg = prg
-	_ = terminates(env)
-	return env.acc
-
+	_, acc := terminates(Env{prg: prg})
+	return acc
 }
+
 func part2(prg []Instr) int {
-	env := new(Env)
-	env.prg = prg
+	env := Env{prg: prg}
 
 	for line, inst := range prg {
 		if inst.op == "nop" {
 			env.prg[line].op = "jmp"
-			if terminates(env) {
-				return env.acc
+			if t, acc := terminates(env); t {
+				return acc
 			}
 			env.prg[line].op = "nop"
 		}
@@ -105,8 +98,8 @@ func part2(prg []Instr) int {
 	for line, inst := range prg {
 		if inst.op == "jmp" {
 			env.prg[line].op = "nop"
-			if terminates(env) {
-				return env.acc
+			if t, acc := terminates(env); t {
+				return acc
 			}
 			env.prg[line].op = "jmp"
 		}

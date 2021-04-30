@@ -20,23 +20,24 @@ type ColorWithMultiplicity struct {
 }
 
 func parseLine(line string) Color {
-	color := new(Color)
 	parts := strings.Split(line, "bags")
-	color.name = strings.TrimSpace(parts[0])
-	color.contain = []ColorWithMultiplicity{}
-
+	color := Color{
+		name:    strings.TrimSpace(parts[0]),
+		contain: []ColorWithMultiplicity{},
+	}
 	parts = strings.Split(line, "contain")
 	parts = strings.Split(strings.TrimSpace(parts[1]), " ")
 	for i := 0; i < len(parts); i = i + 4 {
 		multiplicity, err := strconv.Atoi(parts[i])
 		if err == nil {
-			colorm := new(ColorWithMultiplicity)
-			colorm.multiplicity = multiplicity
-			colorm.name = parts[i+1] + " " + parts[i+2]
-			color.contain = append(color.contain, *colorm)
+			colorm := ColorWithMultiplicity{
+				multiplicity: multiplicity,
+				name:         parts[i+1] + " " + parts[i+2],
+			}
+			color.contain = append(color.contain, colorm)
 		}
 	}
-	return *color
+	return color
 }
 
 type Store = map[string][]ColorWithMultiplicity
