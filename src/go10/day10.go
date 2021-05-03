@@ -48,11 +48,13 @@ func part2(list []int) int {
 				nb1++
 			}
 			if diff == 3 {
-				if nb1 == 4 {
+				switch nb1 {
+				// could have use tribonacci numbers
+				case 4:
 					res *= 7
-				} else if nb1 == 3 {
+				case 3:
 					res *= 4
-				} else if nb1 == 2 {
+				case 2:
 					res *= 2
 				}
 				nb1 = 0
