@@ -1,3 +1,3 @@
 # Advent of Code 2020
 
-Learning Rust
+Learning Rust and Go

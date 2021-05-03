@@ -76,15 +76,14 @@ func countBags(s Store, name string) int {
 	return res
 }
 
-func part1(s Store) int {
-	res := 0
+func part1(s Store) (res int) {
 	for key := range s {
 		b := containsColor(s, key, "shiny gold")
 		if b {
 			res++
 		}
 	}
-	return res
+	return
 }
 
 func part2(s Store) int {
